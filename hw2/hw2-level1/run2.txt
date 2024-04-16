@@ -1,0 +1,53 @@
+20000 3.85838
+21000 3.53548
+22000 5.18595
+23000 5.02839
+24000 7.36456
+25000 7.00899
+26000 7.33133
+27000 8.43288
+28000 10.14879
+29000 10.74396
+30000 11.45677
+31000 12.80768
+32000 22.49067
+33000 14.95405
+34000 18.53514
+35000 20.31208
+36000 26.78255
+37000 23.34039
+38000 27.75818
+39000 31.19713
+40000 26.79868
+Number of Threads,Time Taken to Run (in Seconds)
+1,0.895118
+2,2.51599
+Number of Threads,Time Taken to Run (in Seconds)
+1,0.890547
+Number of Threads,Time Taken to Run (in Seconds)
+1,0.912207
+2,3.77538
+3,4.85986
+4,5.65984
+5,7.78766
+6,12.4959
+7,17.8047
+8,20.6719
+
+Spacing Size,Time Taken to Run (in Seconds)
+1,1.19045
+Spacing Size,Time Taken to Run (in Seconds)
+1,0.930153
+Spacing Size,Time Taken to Run (in Seconds)
+1,0.92241
+2,3.21334
+Spacing Size,Time Taken to Run (in Seconds)
+1,0.887925
+2,2.89316
+Spacing Size,Time Taken to Run (in Seconds)
+1,0.933075
+Spacing Size,Time Taken to Run (in Seconds)
+1,0.918805
+Spacing Size,Time Taken to Run (in Seconds)
+1,0.908463
+2,3.9756

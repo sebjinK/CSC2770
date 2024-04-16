@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# first compile for row-by-row
+g++ run1.cpp -o a1
+# first complie for column-by-column
+g++ run2.cpp -o a2
+
+OUTPUT_FILE="run1.txt"
+echo "Array Size | Time Taken to Run ROW-BY-ROW (in Seconds) | Time Taken to Run COLUMN-BY-COLUMN (in Seconds)" 
+echo "--------------------------------------------------------------------------------------------------------"
+echo "Array Size","Time Taken to Run ROW-BY-ROW (in Seconds)","Time Taken to Run COLUMN-BY-COLUMN (in Seconds)" >> $OUTPUT_FILE
+for ((i=20000; i<=40000; i+=1000)); do #use arithmetic expansion cause C style is easier to work with
+    totalTimeRR=0
+    totalTimeCC=0
+    for ((j=0; j<20; j++)); do
+        timeTakenRR=$(./a1 $i | grep "Time:" | awk '{print $2}' &)
+        timeTakenCC=$(./a2 $i | grep "Time:" | awk '{print $2}' &)
+        wait
+        totalTimeRR=$(echo "$totalTimeRR + $timeTakenRR" | bc) # Total compiled time for this array size plus the time taken for this run (x/20)
+        totalTimeCC=$(echo "$totalTimeCC + $timeTakenCC" | bc)
+    done
+    avgTimeRR=$(echo "scale=5; $totalTimeRR / 20" | bc)
+    avgTimeCC=$(echo "scale=5; $totalTimeCC / 20" | bc)
+    echo "$i      | $avgTimeRR                                    | $avgTimeCC"   # for debug
+    echo $i,$avgTimeRR,$avgTimeCC >> $OUTPUT_FILE
+done
+echo ""
+echo "" >> $OUTPUT_FILE

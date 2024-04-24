@@ -21,7 +21,7 @@ char *ltrim(char *s);
 
 int main(int argc, char* argv[]) {
         int sockfd, newsockfd; 
-	socklen_t clilen;
+	    socklen_t clilen;
         struct sockaddr_in cli_addr, serv_addr;
 
         if (argc != 2) {

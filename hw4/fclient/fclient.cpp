@@ -3,6 +3,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <cstring>
 #include <pthread.h>
 #include <ctype.h>
@@ -14,7 +15,7 @@
 
 int main(int argc, char* argv[])
 {
-    int sockfd, n;
+    int sockfd;
     struct sockaddr_in serv_addr;
     struct hostent * server;
     FILE * fp;
@@ -40,6 +41,7 @@ int main(int argc, char* argv[])
         close(sockfd);
         return 1; 
     }
+
     bzero((char *)&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     memcpy(&serv_addr.sin_addr, server->h_addr, server->h_length);

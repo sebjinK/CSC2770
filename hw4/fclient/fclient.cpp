@@ -77,15 +77,8 @@ int main(int argc, char* argv[])
     strcat(gMessage, "\n");
     //strcat(gMessage, "\0"); // just in ccase we need to null terminate
     //////////////////////////////SEND REQUEST TO SERVER////////////////////////////
-    if (send(sockfd, gMessage, sizeof(gMessage), 0) < 0) //send a message with a "g <filename>\n"
-    {
-        std::cerr << "ERROR: Writing to socket: " <<  strerror(errno) << std::endl;
-        close(sockfd);// close the socket if we cannot send the message
-        return 1;
-    }
-    std::cout << "Sent request to download " << filename << std::endl;
-    
-        ///////////////////////////////OPEN SOCKFP/////////////////////////////
+    //if (send(sockfd, gMessage, sizeof(gMessage), 0) < 0) //send a message with a "g <filename>\n"
+         ///////////////////////////////OPEN SOCKFP/////////////////////////////
     socket_fp = fdopen(sockfd, "r");
     if (!socket_fp)
     {
@@ -96,11 +89,20 @@ int main(int argc, char* argv[])
     }
     else
         std::cout << "Correctly Converted SocketFD to FILE *" << std::endl;
+    //////////////////////////////////print out the buffer///////////////////////
+    if (send(sockfd, gMessage, strlen(gMessage), 0) /*fprintf(socket_fp, gMessage)*/ < 0)
+    {//fprintf()
+        std::cerr << "ERROR: Writing to socket: " <<  strerror(errno) << std::endl;
+        fclose(socket_fp);// close the socket if we cannot send the message
+        return 1;
+    }
+    std::cout << "Sent request to download " << filename << std::endl;
     
     //////////////////////////////SCAN FOR RETURN FROM SERVER/////////////////////////
     int fsize;
-    //int readServerFileSize = sscanf(buffer, "s %d\n", &fsize);
-    if (!(fgets(buffer, 1024, socket_fp)))
+    int readServerFileSize;
+    //if ((fgets(buffer, 1024, socket_fp) == NULL))
+    if (fread(buffer, 1, 1024, socket_fp) < 0)
     {
         std::cerr << "ERROR: Failed to Recieve Byte Size/Server Response: " << buffer << std::endl;
         close(sockfd);
@@ -108,16 +110,22 @@ int main(int argc, char* argv[])
     }
     else
         std::cout << "Correctly Read in Filesize: " << buffer << std::endl;
+    
+    int readBytes = sscanf(buffer, "s %d\n", &fsize);
+    /*
     std::string response(buffer);
     if (!response.empty() && response.back() != '\n')
         response.pop_back();
-    if (response.size() < 3 || response[0] != 's' || response[1] != ' ')
+        */
+    if (readBytes == 0)
     {
         std::cerr << "ERROR: Failed Parsing Correct Response From Server: s <sizeBytes> + newline\n";
         fclose(socket_fp);
         close(sockfd);
         return 1;
     }
+    else
+        std::cout << "Correctly Parsed Server Response\n";
     /*
     std::istringstream iss(response.substr(2, response.size() - 1));
     if (!(iss >> fsize))
@@ -129,7 +137,7 @@ int main(int argc, char* argv[])
     }*/
 
 
-    fsize = stoi(response.substr(2, response.size() - 1));
+    //fsize = stoi(response.substr(2, response.size() - 1));
     /////////////////////////////OPEN THE FILE///////////////////////////////////////
     FILE_fp = fopen(filename, "wb"); //open the filename that is retrieved
     if (!FILE_fp)
@@ -149,13 +157,14 @@ int main(int argc, char* argv[])
         fwrite(buffer, sizeof(char), strlen(buffer), FILE_fp);
         bzero(buffer, 1024);        
     }*/
-    std::cout << "Saved " << filename << " to buffer through download\n"; 
+    //std::cout << "Saved " << filename << " to buffer through download\n"; 
 
     int receievedBytes = 0;
     while (receievedBytes < fsize)
     {
-        if (fgets(buffer, sizeof(buffer), socket_fp) == NULL)
-            break;
+        //if (fgets(buffer, sizeof(buffer), socket_fp) == NULL)
+        if (fread(buffer, 1, 1024, socket_fp))  
+            break;//fread
         int numToWrite = std::min((fsize - receievedBytes), (int)strlen(buffer));
         fwrite(buffer, sizeof(buffer), numToWrite, FILE_fp);
         receievedBytes += numToWrite;

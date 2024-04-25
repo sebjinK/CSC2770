@@ -100,9 +100,7 @@ int main(int argc, char* argv[])
     
     //////////////////////////////SCAN FOR RETURN FROM SERVER/////////////////////////
     int fsize;
-    int readServerFileSize;
-    //if ((fgets(buffer, 1024, socket_fp) == NULL))
-    if (fread(buffer, 1, 1024, socket_fp) < 0)
+    if ((fgets(buffer, 1024, socket_fp) == NULL))
     {
         std::cerr << "ERROR: Failed to Recieve Byte Size/Server Response: " << buffer << std::endl;
         close(sockfd);
@@ -162,8 +160,8 @@ int main(int argc, char* argv[])
     int receievedBytes = 0;
     while (receievedBytes < fsize)
     {
-        //if (fgets(buffer, sizeof(buffer), socket_fp) == NULL)
-        if (fread(buffer, 1, 1024, socket_fp))  
+        //if (fread(buffer, 1, 1024, socket_fp)) 
+        if (fgets(buffer, sizeof(buffer), socket_fp) == NULL)
             break;//fread
         int numToWrite = std::min((fsize - receievedBytes), (int)strlen(buffer));
         fwrite(buffer, sizeof(buffer), numToWrite, FILE_fp);

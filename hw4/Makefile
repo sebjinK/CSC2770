@@ -1,45 +1,18 @@
-# all: fserver fclient
+all: server client
 
-# SERVER=fserver
-# CLIENT=fclient
+client:
+	cd fclient && g++ -g -Wall -c -o fclient.o fclient.cpp
+	cd fclient && g++ -g -Wall fclient.o -o fclient
 
-# SERVERCPP=$(SERVER).cpp
-# SOBJS=$(SERVERCPP:.cpp=.o)
-
-# CLIENTCPP=$(CLIENT).cpp
-# COBJS=$(CLIENTCPP:.cpp=.o)
-
-# CXX=g++
-# CC=g++
-
-# CXXFLAGS = -g -Wall
-# LDFLAGS=-g
-
-# $(SERVER) : $(SOBJS)
-
-# $(CLIENT) : $(COBJS)
-
-
-# PHONY: clean run
-# clean:
-# 	rm $(SERVER) $(CLIENT) $(SOBJS) $(COBJS)
-
-
-client: fclient.cpp
-	g++ -g -Wall -c -o ./fclient/fclient.o ./fclient/fclient.cpp
-	g++ -g -Wall ./fclient/fclient.o -o fclient/fclient
-
-server: fserver.cpp
-	g++ -g -Wall -c -o ./fserver/fserver.o ./fserver/fserver.cpp
-	g++ -g -Wall ./fserver/fserver.o ./fserver/fserver
+server: 
+	cd fserver && g++ -g -Wall -c -o fserver.o fserver.cpp
+	cd fserver && g++ -g -Wall fserver.o -o fserver
 
 clean:
-	rm -f fserver/fserver
-	rm -f fserver/fserver.o
-	rm -f fclient/fclient
-	rm -f fclient/fclient.o
+	cd fclient && rm -f *.o fclient
+	cd fserver && rm -f *.o fserver
 
 run:
-	./fserver/fserver 8007
-	./fclient/fclient localhost 8007 hello.txt
+	cd fserver && ./fserver 8007
+	cd fclient && ./fclient localhost 8007 hello.txt
 

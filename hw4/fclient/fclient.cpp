@@ -156,19 +156,42 @@ int main(int argc, char* argv[])
         bzero(buffer, 1024);        
     }*/
     //std::cout << "Saved " << filename << " to buffer through download\n"; 
-
+ 
     int receievedBytes = 0;
     while (receievedBytes < fsize)
-    {
-        //if (fread(buffer, 1, 1024, socket_fp)) 
-        if (fgets(buffer, sizeof(buffer), socket_fp) == NULL)
+    {    //if (fgets(buffer, 1024, socket_fp) == NULL)
+        int bytesRead = fread(buffer, 1, 1024, socket_fp);
+        int bytesWritten = fwrite(buffer, 1, bytesRead, FILE_fp);
+        if (bytesRead <= 0) 
             break;//fread
+        if (bytesWritten <= 0)
+            break;
+        if (bytesWritten < bytesRead)
+        {
+            std::cerr << "ERROR: Writing to file Failed" << std::endl;
+            fclose(FILE_fp);
+            fclose(socket_fp);
+            close(sockfd);
+            return 1;
+        }
+        receievedBytes += bytesRead;
+
+        /*
         int numToWrite = std::min((fsize - receievedBytes), (int)strlen(buffer));
         fwrite(buffer, sizeof(buffer), numToWrite, FILE_fp);
-        receievedBytes += numToWrite;
+        receievedBytes += numToWrite;*/
+    }
+    if (receievedBytes != fsize)
+    {
+        std::cerr << "ERROR: File size mismatch: Expected: " << fsize << ", got " << receievedBytes << std::endl; 
+        fclose(FILE_fp);
+        fclose(socket_fp);
+        close(sockfd);
+        return 1;
     }
     fclose(FILE_fp);
-    std::cout << "Correctly saved Number of bytes\n";
+    std::cout << "Correctly Transferred File from Server\n";
+
     /////////////////////////////////Check if the cllient is reading from the socket////////////////////////////
     if (ferror(socket_fp))
     {

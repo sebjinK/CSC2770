@@ -18,8 +18,8 @@ int main(int argc, char* argv[])
     int sockfd; // the integer socket we use for this project
     struct sockaddr_in serv_addr; //server address we are going to 
     struct hostent * server; // server object we are working with
-    FILE * fp; // file pointer holding the actual binary file we want
-    FILE * sockfp;
+    FILE * FILE_fp; // file pointer holding the actual binary file we want
+    FILE * socket_fp;
     
     const char* hostname = argv[1]; // grab the hostname
     int port = std::atoi(argv[2]); // grab the port number
@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
     std::cout << "Correct Arguments/# of arguments" << std::endl;
 
     ////////////////////////////CHECK IF SOCKFD CONNECCTS//////////////////////////
-    sockfd = (AF_INET, SOCK_STREAM, 0); //setup the socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0); //setup the socket
     if (sockfd < 0) //check to see sockfd screwed up
     {
         std::cerr << "ERROR: opening socket: " << strerror(errno) << std::endl; 
@@ -91,33 +91,33 @@ int main(int argc, char* argv[])
         return 1;
     }
     std::cout << "Correctly Read in Filesize: " << buffer << std::endl;
-    
+        ///////////////////////////////OPEN SOCKFP/////////////////////////////
+    socket_fp = fdopen(sockfd, "r");
+    if (!socket_fp)
+    {
+        std::cerr << "ERROR: Converting Socketfd to FILE *" << std::endl;
+        fclose(FILE_fp);
+        close(sockfd);
+        return 1;
+    }
     /////////////////////////////OPEN THE FILE///////////////////////////////////////
-    fp = fopen(filename, "wb"); //open the filename that is retrieved
-    if (fp == NULL)
+    FILE_fp = fopen(filename, "wb"); //open the filename that is retrieved
+    if (FILE_fp == NULL)
     {
         std::cerr << "ERROR: Opening File" << std::endl;
-        fclose(fp);
+        fclose(FILE_fp);
         close(sockfd);
         return 1;
     }
     std::cout << "Correctly Opened file " << filename << std::endl;
     
-    ///////////////////////////////OPEN SOCKFP/////////////////////////////
-    sockfp = fopen(filename, "r");
-    if (!sockfp)
-    {
-        std::cerr << "ERROR: Converting Socketfd to FILE *" << std::endl;
-        fclose(fp);
-        close(sockfd);
-        return 1;
-    }
+
     std::cout << "Correctly Converted SocketFD to FILE *" << std::endl;
     
-    while (fgets(buffer, sizeof(buffer), fp) != nullptr)
+    while (fgets(buffer, sizeof(buffer), FILE_fp) != nullptr)
     {
         //check for error
-        fwrite(buffer, sizeof(char), strlen(buffer), fp);
+        fwrite(buffer, sizeof(char), strlen(buffer), FILE_fp);
         bzero(buffer, 1024);        
     }
     std::cout << "Saved " << filename << " to buffer through download\n"; 
@@ -125,20 +125,20 @@ int main(int argc, char* argv[])
     int receievedBytes = 0;
     while (receievedBytes < fsize)
     {
-        if (fgets(buffer, sizeof(buffer), sockfp) == NULL)
+        if (fgets(buffer, sizeof(buffer), socket_fp) == NULL)
             break;
         int numToWrite = std::min((fsize - receievedBytes), (int)strlen(buffer));
-        fwrite(buffer, sizeof(buffer), numToWrite, fp);
+        fwrite(buffer, sizeof(buffer), numToWrite, FILE_fp);
         receievedBytes += numToWrite;
     }
-    fclose(fp);
+    fclose(FILE_fp);
     std::cout << "Correctly saved Number of bytes\n";
     /////////////////////////////////Check if the cllient is reading from the socket////////////////////////////
-    if (ferror(sockfp))
+    if (ferror(socket_fp))
     {
         std::cerr << "ERROR: Reading from Socket" << std::endl;
         //fclose(fp);
-        fclose(sockfp);
+        fclose(socket_fp);
         close(sockfd);
         return 1;
     }
@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
     {
         std::cerr << "ERROR: Failed to send finish" << std::endl;
         //fclose(fp);
-        fclose(sockfp);
+        fclose(socket_fp);
         close(sockfd);
         return 1;
     }
@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
     // cleanup
     //fclose(fp);
     close(sockfd);
-    fclose(sockfp);
+    fclose(socket_fp);
 
     return 0;
 }

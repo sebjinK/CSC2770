@@ -61,14 +61,16 @@ int main(int argc, char* argv[])
     serv_addr.sin_port = htons(port);// use htons to set up the port
 
     /////////////////////////////////connecct to server////////////////////////////////////
-    if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0); //connect using the serv_addr
+    if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) //connect using the serv_addr
     {
         std::cerr << "ERROR: Connection Failed: " << strerror(errno) << std::endl;
         close(sockfd); //close the socket if we didn't actually connect
         return 1;
     }
-    std::cout << "Establish Successful Connection to " << hostname << std::endl; 
-
+    else
+    {
+        std::cout << "Establish Successful Connection to " << hostname << std::endl; 
+    }
 
     char gMessage[255] = "g ";
     strcat(gMessage, filename);
@@ -82,44 +84,71 @@ int main(int argc, char* argv[])
         return 1;
     }
     std::cout << "Sent request to download " << filename << std::endl;
-    //////////////////////////////SCAN FOR RETURN FROM SERVER/////////////////////////
-    int fsize;
-    if (sscanf(buffer, "s %d\n", &fsize) != 1)
-    {
-        std::cerr << "ERROR: Failed to Recieve Byte Size/Server Response: " << buffer << std::endl;
-        close(sockfd);
-        return 1;
-    }
-    std::cout << "Correctly Read in Filesize: " << buffer << std::endl;
+    
         ///////////////////////////////OPEN SOCKFP/////////////////////////////
     socket_fp = fdopen(sockfd, "r");
     if (!socket_fp)
     {
         std::cerr << "ERROR: Converting Socketfd to FILE *" << std::endl;
-        fclose(FILE_fp);
+        fclose(socket_fp);
         close(sockfd);
         return 1;
     }
+    else
+        std::cout << "Correctly Converted SocketFD to FILE *" << std::endl;
+    
+    //////////////////////////////SCAN FOR RETURN FROM SERVER/////////////////////////
+    int fsize;
+    //int readServerFileSize = sscanf(buffer, "s %d\n", &fsize);
+    if (!(fgets(buffer, 1024, socket_fp)))
+    {
+        std::cerr << "ERROR: Failed to Recieve Byte Size/Server Response: " << buffer << std::endl;
+        close(sockfd);
+        return 1;
+    }
+    else
+        std::cout << "Correctly Read in Filesize: " << buffer << std::endl;
+    std::string response(buffer);
+    if (!response.empty() && response.back() != '\n')
+        response.pop_back();
+    if (response.size() < 3 || response[0] != 's' || response[1] != ' ')
+    {
+        std::cerr << "ERROR: Failed Parsing Correct Response From Server: s <sizeBytes> + newline\n";
+        fclose(socket_fp);
+        close(sockfd);
+        return 1;
+    }
+    /*
+    std::istringstream iss(response.substr(2, response.size() - 1));
+    if (!(iss >> fsize))
+    {
+        std::cerr << "ERROR: Failed to Parse file size from: " << response << std::endl;
+        fclose(socket_fp);
+        close(sockfd);
+        return 1;
+    }*/
+
+
+    fsize = stoi(response.substr(2, response.size() - 1));
     /////////////////////////////OPEN THE FILE///////////////////////////////////////
     FILE_fp = fopen(filename, "wb"); //open the filename that is retrieved
-    if (FILE_fp == NULL)
+    if (!FILE_fp)
     {
         std::cerr << "ERROR: Opening File" << std::endl;
         fclose(FILE_fp);
         close(sockfd);
         return 1;
     }
-    std::cout << "Correctly Opened file " << filename << std::endl;
+    else
+        std::cout << "Correctly Opened file " << filename << std::endl;
     
-
-    std::cout << "Correctly Converted SocketFD to FILE *" << std::endl;
-    
+    /*
     while (fgets(buffer, sizeof(buffer), FILE_fp) != nullptr)
     {
         //check for error
         fwrite(buffer, sizeof(char), strlen(buffer), FILE_fp);
         bzero(buffer, 1024);        
-    }
+    }*/
     std::cout << "Saved " << filename << " to buffer through download\n"; 
 
     int receievedBytes = 0;
@@ -144,6 +173,7 @@ int main(int argc, char* argv[])
     }
     std::cout << "Correctly read from socket File Pointer" << std::endl;
     //////////////////////////////////////Send a final message bacck to the server////////////////////////////////
+    //int sendFinalMessageToServer = send(sockfd, "d\n", strlen("d\n"), 0);
     if (send(sockfd, "d\n", strlen("d\n"), 0) < 0)
     {
         std::cerr << "ERROR: Failed to send finish" << std::endl;

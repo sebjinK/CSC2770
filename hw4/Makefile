@@ -13,6 +13,4 @@ clean:
 	cd fserver && rm -f *.o fserver
 
 run:
-	cd fserver && ./fserver 8007
-	cd fclient && ./fclient localhost 8007 hello.txt
-
+	cd fserver && ./fserver 8007& cd fclient && ./fclient localhost 8007 hello.txt

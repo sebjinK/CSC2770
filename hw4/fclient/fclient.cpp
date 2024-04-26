@@ -15,7 +15,7 @@
 
 int main(int argc, char* argv[])
 {
-    int sockfd; // the integer socket we use for this project
+    int sockfd, fsize; // the integer socket we use for this project
     struct sockaddr_in serv_addr; //server address we are going to 
     struct hostent * server; // server object we are working with
     FILE * FILE_fp; // file pointer holding the actual binary file we want
@@ -89,8 +89,19 @@ int main(int argc, char* argv[])
     }
     else
         std::cout << "Correctly Converted SocketFD to FILE *" << std::endl;
+    /////////////////////////////OPEN THE FILE///////////////////////////////////////
+    FILE_fp = fopen(filename, "wb"); //open the filename that is retrieved
+    if (!FILE_fp)
+    {
+        std::cerr << "ERROR: Opening File" << std::endl;
+        fclose(FILE_fp);
+        close(sockfd);
+        return 1;
+    }
+    else
+        std::cout << "Correctly Opened file " << filename << std::endl;
     //////////////////////////////////print out the buffer///////////////////////
-    if (send(sockfd, gMessage, strlen(gMessage), 0) /*fprintf(socket_fp, gMessage)*/ < 0)
+    if (send(sockfd, gMessage, strlen(gMessage), 0) < 0)
     {//fprintf()
         std::cerr << "ERROR: Writing to socket: " <<  strerror(errno) << std::endl;
         fclose(socket_fp);// close the socket if we cannot send the message
@@ -100,8 +111,8 @@ int main(int argc, char* argv[])
     std::cout << "Correctly sent request to download " << filename << std::endl;
     
     //////////////////////////////SCAN FOR RETURN FROM SERVER/////////////////////////
-    int fsize;
     if ((fgets(buffer, 1024, socket_fp) == NULL))
+    //if (fread(buffer, 1, 1024, socket_fp))
     {
         std::cerr << "ERROR: Failed to Recieve Byte Size/Server Response: " << buffer << std::endl;
         close(sockfd);
@@ -135,17 +146,7 @@ int main(int argc, char* argv[])
         std::cout << "Correctly Parsed Server Response\n";
 
     //fsize = stoi(response.substr(2, response.size() - 1));
-    /////////////////////////////OPEN THE FILE///////////////////////////////////////
-    FILE_fp = fopen(filename, "wb"); //open the filename that is retrieved
-    if (!FILE_fp)
-    {
-        std::cerr << "ERROR: Opening File" << std::endl;
-        fclose(FILE_fp);
-        close(sockfd);
-        return 1;
-    }
-    else
-        std::cout << "Correctly Opened file " << filename << std::endl;
+
     
     /*
     while (fgets(buffer, sizeof(buffer), FILE_fp) != nullptr)
@@ -176,28 +177,28 @@ int main(int argc, char* argv[])
         }
         receievedBytes += bytesRead;
         */
-       while (receievedBytes < fsize && !feof(socket_fp))
-       {
-            int bytesRead = fread(buffer, 1, 1024, socket_fp);
-            struct timeval tv;
-            tv.tv_sec = 10;
-            tv.tv_usec = 0;
+    struct timeval tv;
+    tv.tv_sec = 5;
+    tv.tv_usec = 0;
 
-            setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
-            if (bytesRead > 0)
-            {
-                int bytesWritten = fwrite(buffer, 1, bytesRead, FILE_fp);
-                if (bytesRead <= 0) 
-                    break;//fread
-                if (bytesWritten <= 0)
-                    break;
-                receievedBytes += bytesRead;
-            }
-            else
-            {
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
+    while (receievedBytes < fsize && !feof(socket_fp))
+    {
+        int bytesRead = fread(buffer, 1, 1024, socket_fp);
+        if (bytesRead > 0)
+        {
+            int bytesWritten = fwrite(buffer, 1, bytesRead, FILE_fp);
+            if (bytesRead <= 0) 
+                break;//fread
+            if (bytesWritten <= 0)
                 break;
-            }
-       }
+            receievedBytes += bytesRead;
+        }
+        else
+        {
+            break;
+        }
+    }
         /*
         int numToWrite = std::min((fsize - receievedBytes), (int)strlen(buffer));
         fwrite(buffer, sizeof(buffer), numToWrite, FILE_fp);
@@ -215,7 +216,7 @@ int main(int argc, char* argv[])
     std::cout << "Correctly Transferred File from Server\n";
 
     /////////////////////////////////Check if the cllient is reading from the socket////////////////////////////
-    if (ferror(socket_fp))
+    /*if (ferror(socket_fp))
     {
         std::cerr << "ERROR: Reading from Socket" << std::endl;
         //fclose(fp);
@@ -225,8 +226,8 @@ int main(int argc, char* argv[])
     }
     std::cout << "Correctly read from socket File Pointer" << std::endl;
     //////////////////////////////////////Send a final message bacck to the server////////////////////////////////
-    //int sendFinalMessageToServer = send(sockfd, "d\n", strlen("d\n"), 0);
-    if (send(sockfd, "d", strlen("d"), 0) < 0)
+    //int sendFinalMessageToServer = send(sockfd, "d\n", strlen("d\n"), 0);*/
+    if (send(sockfd, "d\n", 2, 0) < 0)
     {
         std::cerr << "ERROR: Failed to send finish" << std::endl;
         //fclose(fp);

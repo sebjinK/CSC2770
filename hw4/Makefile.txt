@@ -9,8 +9,9 @@ server:
 	cd fserver && g++ -g -Wall fserver.o -o fserver
 
 clean:
-	cd fclient && rm -f *.o fclient
+	cd fclient && rm -f *.o fclient hello.txt
 	cd fserver && rm -f *.o fserver
 
 run:
-	cd fserver && ./fserver 8007& cd fclient && ./fclient localhost 8007 hello.txt
+	cd fserver && ./fserver 8007 
+	cd fclient && ./fclient localhost 8007 hello.txt
